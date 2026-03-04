@@ -156,6 +156,18 @@
             font-weight: bold;
         }
 
+        /* تنسيق العناوين الفاصلة بين الباقات والألعاب */
+        .section-title {
+            color: var(--primary-color);
+            margin: 30px 0 20px;
+            font-size: 22px;
+            border-bottom: 2px dashed var(--border-color);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .grid-layout {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -177,6 +189,20 @@
             transform: translateY(-5px);
             box-shadow: 0 6px 15px rgba(255, 153, 0, 0.15);
             border-color: #3a4759;
+        }
+
+        /* تصميم مميز لكروت الباقات */
+        .package-card {
+            border: 2px solid var(--primary-color);
+            background: linear-gradient(160deg, #1a1610 0%, #151b2b 100%);
+        }
+        
+        .package-desc {
+            font-size: 13px;
+            color: #e0e0e0;
+            text-align: center;
+            margin-bottom: 15px;
+            line-height: 1.6;
         }
 
         .card-header {
@@ -429,6 +455,10 @@
             </div>
         </div>
 
+        <h2 class="section-title">📦 باقات الألعاب المجمعة</h2>
+        <div class="grid-layout" id="packagesGrid"></div>
+
+        <h2 class="section-title">🎮 قائمة الألعاب الفردية</h2>
         <div class="grid-layout" id="gamesGrid"></div>
     </div>
 
@@ -464,11 +494,29 @@
     </div>
 
     <script>
+        // داتا الباقات المجمعة
+        const packagesDB = [
+            { 
+                id: 'pkg1', 
+                name: "باقة 219 جيجا (اقتصادية)", 
+                desc: "أبرز الألعاب: GTA V, FIFA 19, PES 23, Red Dead Redemption, COD BO2, Mortal Kombat, Minecraft <strong>وأكثر من 25 لعبة...</strong>", 
+                minSize: 219, 
+                maxSize: 219 
+            },
+            { 
+                id: 'pkg2', 
+                name: "باقة 451 جيجا (شاملة الحصريات)", 
+                desc: "أبرز الألعاب: The Last of Us, أجزاء Uncharted, أجزاء God of War, FIFA 21, GTA V <strong>وأكثر من 35 لعبة...</strong>", 
+                minSize: 451, 
+                maxSize: 451 
+            }
+        ];
+
         // قاعدة البيانات الكاملة بعد التنظيف وإزالة التكرار
         const gamesDB = [
             { id: 1, name: "007 Blood Stone", genres: ["أكشن"], playersTxt: "1", maxPlayers: 1, minSize: 5, maxSize: 5 },
             { id: 2, name: "50 Cent: Blood on the Sand", genres: ["أكشن"], playersTxt: "1 - 2", maxPlayers: 2, minSize: 6, maxSize: 6 },
-            { id: 3, name: "Black OPS 2 DLC", genres: ["أكشن"], playersTxt: "1", maxPlayers: 1, minSize: 1, maxSize: 7 }, // لعبة غير معروفة من القائمة
+            { id: 3, name: "Black OPS 2 DLC", genres: ["أكشن"], playersTxt: "1", maxPlayers: 1, minSize: 1, maxSize: 7 }, 
             { id: 4, name: "Assassin's Creed: Brotherhood", genres: ["أكشن", "عالم مفتوح"], playersTxt: "1", maxPlayers: 1, minSize: 8, maxSize: 8 },
             { id: 5, name: "Afro Samurai", genres: ["أكشن"], playersTxt: "1", maxPlayers: 1, minSize: 4, maxSize: 4 },
             { id: 6, name: "Alien: Isolation", genres: ["رعب"], playersTxt: "1", maxPlayers: 1, minSize: 15, maxSize: 15 },
@@ -677,7 +725,7 @@
             { id: 209, name: "Uncharted 2: Among Thieves", genres: ["أكشن", "مغامرات"], playersTxt: "1", maxPlayers: 1, minSize: 22, maxSize: 22 },
             { id: 210, name: "Uncharted 3: Drake's Deception", genres: ["أكشن", "مغامرات"], playersTxt: "1", maxPlayers: 1, minSize: 33, maxSize: 33 },
             { id: 211, name: "Uncharted: Drake's Fortune", genres: ["أكشن", "مغامرات"], playersTxt: "1", maxPlayers: 1, minSize: 20, maxSize: 20 },
-            { id: 212, name: "WWE SmackDown vs. Raw 2011", genres: ["رياضة", "أكشن"], playersTxt: "1 - 4", maxPlayers: 4, minSize: 6, maxSize: 6 }, // Universe Mode 
+            { id: 212, name: "WWE SmackDown vs. Raw 2011", genres: ["رياضة", "أكشن"], playersTxt: "1 - 4", maxPlayers: 4, minSize: 6, maxSize: 6 }, 
             { id: 213, name: "Up", genres: ["العاب عائلية"], playersTxt: "1 - 2", maxPlayers: 2, minSize: 2, maxSize: 2 },
             { id: 214, name: "Vanquish", genres: ["أكشن"], playersTxt: "1", maxPlayers: 1, minSize: 12, maxSize: 12 },
             { id: 215, name: "Virtua Tennis 4", genres: ["رياضة"], playersTxt: "1 - 4", maxPlayers: 4, minSize: 4, maxSize: 4 },
@@ -719,13 +767,41 @@
 
         function handleEnter(e) { if(e.key === 'Enter') renderGames(); }
 
+        // الدالة دي بقت مسؤولة عن إضافة الباقات أو الألعاب للسلة
         function toggleCart(id) {
-            const game = gamesDB.find(g => g.id === id);
-            const index = cart.findIndex(g => g.id === id);
+            // ندور في الألعاب أو في الباقات
+            let item = gamesDB.find(g => g.id === id) || packagesDB.find(p => p.id === id);
+            if(!item) return;
+
+            const index = cart.findIndex(c => c.id === id);
             if(index > -1) cart.splice(index, 1);
-            else cart.push(game);
+            else cart.push(item);
+            
             updateCartUI();
             renderGames();
+            renderPackages();
+        }
+
+        function renderPackages() {
+            const grid = document.getElementById('packagesGrid');
+            grid.innerHTML = '';
+            
+            packagesDB.forEach(pkg => {
+                const inCart = cart.some(c => c.id === pkg.id);
+                grid.innerHTML += `
+                    <div class="card package-card">
+                        <div class="card-header"><h3 class="game-title">✨ ${pkg.name}</h3></div>
+                        <div class="card-content">
+                            <p class="package-desc">${pkg.desc}</p>
+                            <div class="info-text">💾 المساحة الإجمالية: <span dir="ltr">${pkg.minSize} GB</span></div>
+                            <div class="card-actions">
+                                <button class="btn ${inCart ? 'btn-add added' : 'btn-add'}" onclick="toggleCart('${pkg.id}')">
+                                    ${inCart ? '❌ إزالة الباقة من السلة' : '➕ إضافة الباقة للسلة'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
         }
 
         function renderGames() {
@@ -769,15 +845,19 @@
         }
 
         function updateCartUI() {
+            // ترتيب السلة أبجدياً بناءً على اسم اللعبة/الباقة
+            cart.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
             document.getElementById('cartCount').innerText = cart.length;
             const list = document.getElementById('cartItemsList');
             list.innerHTML = '';
             let minTotal = 0, maxTotal = 0;
             if(cart.length === 0) list.innerHTML = '<p style="text-align:center; color:#aaa;">السلة فارغة حالياً</p>';
-            cart.forEach(game => {
-                minTotal += game.minSize; maxTotal += game.maxSize;
-                let itemSizeText = (game.minSize === game.maxSize) ? `${game.minSize} GB` : `${game.minSize}-${game.maxSize} GB`;
-                list.innerHTML += `<div class="cart-item"><span>${game.name}</span><span style="color:var(--primary-color);" dir="ltr">${itemSizeText}</span></div>`;
+            
+            cart.forEach(item => {
+                minTotal += item.minSize; maxTotal += item.maxSize;
+                let itemSizeText = (item.minSize === item.maxSize) ? `${item.minSize} GB` : `${item.minSize}-${item.maxSize} GB`;
+                list.innerHTML += `<div class="cart-item"><span>${item.name}</span><span style="color:var(--primary-color);" dir="ltr">${itemSizeText}</span></div>`;
             });
             document.getElementById('totalSizeUI').innerText = (minTotal === maxTotal) ? `${minTotal} GB` : `${minTotal} - ${maxTotal} GB`;
         }
@@ -789,24 +869,24 @@
             const name = document.getElementById('userName').value.trim();
             const contact = document.getElementById('userPhone').value.trim();
             if(!name || !contact) { alert("من فضلك اكتب اسمك ورقم تليفونك أولاً!"); return; }
-            if(cart.length === 0) { alert("يرجى اختيار ألعاب أولاً!"); return; }
+            if(cart.length === 0) { alert("يرجى اختيار ألعاب أو باقات أولاً!"); return; }
 
             let minTotal = 0, maxTotal = 0;
-            let text = `السلام عليكم،\nأنا ${name} (رقمي: ${contact})\nأود تثبيت ألعاب الـ PS3 التالية على جهازي:\n`;
-            cart.forEach((game, index) => {
-                let sizeTxt = (game.minSize === game.maxSize) ? `${game.minSize} GB` : `${game.minSize}-${game.maxSize} GB`;
-                text += ` ${index + 1}. ${game.name} (${sizeTxt})\n`;
-                minTotal += game.minSize; maxTotal += game.maxSize;
+            let text = `السلام عليكم،\nأنا ${name} (رقمي: ${contact})\nأود تثبيت الاختيارات التالية على جهاز الـ PS3 الخاص بي:\n`;
+            cart.forEach((item, index) => {
+                let sizeTxt = (item.minSize === item.maxSize) ? `${item.minSize} GB` : `${item.minSize}-${item.maxSize} GB`;
+                text += ` ${index + 1}. ${item.name} (${sizeTxt})\n`;
+                minTotal += item.minSize; maxTotal += item.maxSize;
             });
             let finalTotalTxt = (minTotal === maxTotal) ? `${minTotal} جيجابايت` : `من ${minTotal} إلى ${maxTotal} جيجابايت`;
             text += `\nإجمالي المساحة المطلوبة: ${finalTotalTxt}.`;
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
-        renderGames(); updateCartUI();
+        // تشغيل دوال العرض عند فتح الصفحة
+        renderPackages();
+        renderGames(); 
+        updateCartUI();
     </script>
 </body>
 </html>
-
-
-
